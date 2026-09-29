@@ -199,9 +199,12 @@ ${eventLine}`;
         await sql`
           insert into messages (thread_person_id, sender, task_id, body)
           values (${personId}, 'agent', ${tid}, ${text})`;
-        await sql`
-          insert into notifications (person_id, task_id, kind, body)
-          values (${personId}, ${tid}, 'message', ${text})`;
+        // A reply lands in the chat they're looking at, so it isn't a new alert.
+        if (event !== "reply") {
+          await sql`
+            insert into notifications (person_id, task_id, kind, body)
+            values (${personId}, ${tid}, 'message', ${text})`;
+        }
         if (expects_reply && tid != null) {
           await sql`update tasks set awaiting_since = now() where id = ${tid}`;
         }
