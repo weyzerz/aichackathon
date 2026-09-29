@@ -91,6 +91,7 @@ function usePartyState(personId: string) {
 export default function PartyApp({ personId }: { personId: string }) {
   const { data, error, now, refresh } = usePartyState(personId);
   const [tab, setTab] = useState<TabId | null>(null);
+  const [chatDraft, setChatDraft] = useState<{ text: string; key: number } | null>(null);
   const role = data?.viewer.role;
   const tabs = role ? TABS[role] : [];
   const active: TabId | null = tab && tabs.includes(tab) ? tab : (tabs[0] ?? null);
@@ -195,11 +196,33 @@ export default function PartyApp({ personId }: { personId: string }) {
         body = <ActivityFeed activity={activity} now={now} />;
         break;
       case "tasks":
-        body = <MyTasks viewer={viewer} tasks={tasks} areas={areas} now={now} />;
+        body = (
+          <MyTasks
+            viewer={viewer}
+            tasks={tasks}
+            areas={areas}
+            now={now}
+            onReply={(t) => {
+              const text = /flight/i.test(t.title)
+                ? "My flight is "
+                : `About "${t.title}": `;
+              setChatDraft({ text, key: Date.now() });
+              go("chat");
+            }}
+          />
+        );
         break;
       case "chat":
         body = (
-          <Chat viewer={viewer} thread={thread} tasks={tasks} now={now} onChange={() => void refresh()} />
+          <Chat
+            key={chatDraft?.key ?? 0}
+            viewer={viewer}
+            thread={thread}
+            tasks={tasks}
+            now={now}
+            initialDraft={chatDraft?.text}
+            onChange={() => void refresh()}
+          />
         );
         break;
       case "wedding":

@@ -8,11 +8,13 @@ export function MyTasks({
   tasks,
   areas,
   now,
+  onReply,
 }: {
   viewer: Person;
   tasks: Task[];
   areas: Area[];
   now: number;
+  onReply?: (task: Task) => void;
 }) {
   const mine = tasks
     .filter((t) => t.assignee_id === viewer.id)
@@ -38,6 +40,15 @@ export function MyTasks({
               <span className="font-semibold text-[#2E5E22]">You sent: </span>
               {t.response}
             </p>
+          )}
+          {onReply && t.status !== "done" && (
+            <button
+              type="button"
+              onClick={() => onReply(t)}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#8A9A7B] bg-white px-4 text-[15px] font-semibold text-[#3F5236] transition active:scale-[0.98] hover:bg-[#F3F6EF]"
+            >
+              {/flight/i.test(t.title) ? "✈️ Send my flight" : "💬 Update the coordinator"}
+            </button>
           )}
           {t.pay_url && t.status !== "done" && (
             <a

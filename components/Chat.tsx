@@ -17,14 +17,17 @@ export function Chat({
   tasks,
   now,
   onChange,
+  initialDraft,
 }: {
   viewer: Person;
   thread: Message[];
   tasks: Task[];
   now: number;
   onChange: () => void;
+  /** Prefilled reply when the user arrives from a task ("Reply" button). */
+  initialDraft?: string;
 }) {
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState(initialDraft ?? "");
   const [pending, setPending] = useState<Pending[]>([]);
   const [sending, setSending] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +118,11 @@ export function Chat({
         <div className="flex-1">
           {error && <p className="mb-1 text-xs text-[#9A2E1F]">{error}</p>}
           <input
+            autoFocus={!!initialDraft}
+            onFocus={(e) => {
+              const len = e.currentTarget.value.length;
+              e.currentTarget.setSelectionRange(len, len);
+            }}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Reply to your coordinator…"
