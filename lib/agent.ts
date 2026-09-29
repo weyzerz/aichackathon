@@ -241,8 +241,9 @@ ${eventLine}`;
     prompt,
     tools,
     stopWhen: stepCountIs(5),
-    maxOutputTokens: 600,
+    maxOutputTokens: 4000,
   });
 
+  if (!actions.length) console.warn("agent took no actions", { finishReason: result.finishReason, text: result.text.slice(0, 200) });
   return { text: result.text, steps: result.steps.length, actions };
 }
