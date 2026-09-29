@@ -49,7 +49,7 @@ export function TaskRow({
               showArea && area?.name,
               task.due_date && `Due ${formatDate(task.due_date)}`,
               task.amount && formatMoney(task.amount),
-              area?.is_surprise && "Surprise",
+              (area?.is_surprise || task.is_secret) && "🤫 Secret",
             ]
               .filter(Boolean)
               .join(" · ")}

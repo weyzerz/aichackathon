@@ -17,6 +17,7 @@ const Body = z.object({
     .optional()
     .or(z.literal("").transform(() => undefined)),
   amount: z.coerce.number().positive().optional(),
+  isSecret: z.boolean().optional(),
   createdBy: z.string().min(1),
 });
 
@@ -30,9 +31,9 @@ export async function POST(req: Request) {
   let task: Task;
   try {
     [task] = (await sql`
-      insert into tasks (area_id, assignee_id, created_by, title, details, due_date, amount)
+      insert into tasks (area_id, assignee_id, created_by, title, details, due_date, amount, is_secret)
       values (${b.areaId}, ${b.assigneeId}, ${b.createdBy}, ${b.title},
-              ${b.details || null}, ${b.dueDate ?? null}, ${b.amount ?? null})
+              ${b.details || null}, ${b.dueDate ?? null}, ${b.amount ?? null}, ${b.isSecret ?? false})
       returning *`) as Task[];
   } catch (e) {
     return Response.json({ error: String(e) }, { status: 400 });

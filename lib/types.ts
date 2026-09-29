@@ -116,6 +116,7 @@ export interface CreateTaskBody {
   areaId: string;
   dueDate?: string;
   amount?: number;
+  isSecret?: boolean; // hide from the couple
   createdBy: string;
 }
 

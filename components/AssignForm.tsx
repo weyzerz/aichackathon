@@ -23,6 +23,7 @@ export function AssignForm({
   const [areaId, setAreaId] = useState(areas[0]?.id ?? "");
   const [dueDate, setDueDate] = useState("");
   const [amount, setAmount] = useState("");
+  const [isSecret, setIsSecret] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +52,7 @@ export function AssignForm({
             ...(details.trim() ? { details: details.trim() } : {}),
             ...(dueDate ? { dueDate } : {}),
             ...(amount && !Number.isNaN(Number(amount)) ? { amount: Number(amount) } : {}),
+            ...(isSecret ? { isSecret: true } : {}),
           };
           return fetch("/api/tasks", {
             method: "POST",
@@ -175,6 +177,25 @@ export function AssignForm({
             />
           </label>
         </div>
+        {viewer.role !== "couple" && (
+          <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-[#F6F1E4] px-3 py-3">
+            <span>
+              <span className="block text-sm font-semibold text-[#2F3A28]">🤫 Secret from the bride &amp; groom</span>
+              <span className="block text-xs text-[#8A8578]">Maya and Jordan won&apos;t see this task</span>
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isSecret}
+              onClick={() => setIsSecret((v) => !v)}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${isSecret ? "bg-[#5F6F52]" : "bg-[#D9D4C7]"}`}
+            >
+              <span
+                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${isSecret ? "left-[22px]" : "left-0.5"}`}
+              />
+            </button>
+          </label>
+        )}
         {error && <p className="text-sm text-[#9A2E1F]">{error}</p>}
         <div className="flex gap-3">
           <button type="button" className={`${btnGhost} flex-1`} onClick={onCancel}>

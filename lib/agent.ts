@@ -130,7 +130,7 @@ export async function runAgent({ event, personId, taskId }: RunAgentInput): Prom
     : "(no messages yet)";
 
   let eventLine: string;
-  if (event === "assigned") eventLine = `EVENT: assigned — task #${taskId} was just assigned to ${person.name}. Introduce it.`;
+  if (event === "assigned") eventLine = `EVENT: assigned — task #${taskId} was just assigned to ${person.name}. Introduce it in one message. Do not escalate or update any task for this event, even if details are sparse.`;
   else if (event === "nudge")
     eventLine = `EVENT: nudge — ${person.name} hasn't replied about task #${taskId}. This is reminder ${trigger?.nudge_count ?? 1} of 2.`;
   else if (event === "deadline")
