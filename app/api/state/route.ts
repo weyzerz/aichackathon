@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       sql`select id, name, owner_id, is_surprise, date_label, location, description, details from areas
             order by case id when 'bachelorette' then 0 when 'attire' then 1 else 2 end`,
       sql`select id, area_id, assignee_id, created_by, title, details,
-            to_char(due_date, 'YYYY-MM-DD') as due_date, amount, status, status_note, response,
+            to_char(due_date, 'YYYY-MM-DD') as due_date, amount, status, status_note, response, is_secret,
             deadline_reminded_at, overdue_escalated,
             awaiting_since, nudge_count, escalated_to, escalation_reason, created_at, updated_at
           from tasks order by created_at, id`,
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
   if (viewer.role === "couple") {
     areas = allAreas.filter((a) => !a.is_surprise);
     const ok = new Set(areas.map((a) => a.id));
-    tasks = allTasks.filter((t) => ok.has(t.area_id));
+    tasks = allTasks.filter((t) => ok.has(t.area_id) && !t.is_secret);
   } else if (viewer.role === "delegate") {
     const owned = new Set(allAreas.filter((a) => a.owner_id === viewer.id).map((a) => a.id));
     tasks = allTasks.filter((t) => t.assignee_id === viewer.id || owned.has(t.area_id));
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
     activity = (await sql`
       select a.id, a.task_id, a.body, a.created_at from activity a
       left join tasks t on t.id = a.task_id
-      where a.task_id is null or not (t.area_id = any(${surpriseIds}))
+      where a.task_id is null or not (t.area_id = any(${surpriseIds}) or t.is_secret)
       order by a.created_at desc, a.id desc limit 50`) as Activity[];
   } else if (taskIds.length > 0) {
     activity = (await sql`
@@ -99,10 +99,13 @@ export async function GET(req: NextRequest) {
       order by created_at desc, id desc limit 50`) as Activity[];
   }
 
-  // The couple oversee everything visible to them (surprise areas are already filtered out),
-  // so they see escalations routed to delegates too; everyone else sees their own.
+  // Escalations routed to the viewer (for the couple: to either of them). The couple still see
+  // every escalated task as red on the board; this card is what needs their action.
+  const couple = new Set(people.filter((p) => p.role === "couple").map((p) => p.id));
   const escalations = tasks.filter(
-    (t) => t.escalated_to != null && (viewer.role === "couple" || t.escalated_to === viewer.id)
+    (t) =>
+      t.escalated_to != null &&
+      (t.escalated_to === viewer.id || (viewer.role === "couple" && couple.has(t.escalated_to)))
   );
 
   const body: StateResponse = {

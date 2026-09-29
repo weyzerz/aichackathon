@@ -21,6 +21,20 @@ export function Escalations({
   if (escalations.length === 0) return null;
   const name = (id: string) => people.find((p) => p.id === id)?.name ?? id;
 
+  async function sendToCouple(id: number) {
+    setResolving(id);
+    try {
+      await fetch(`/api/tasks/${id}/send-to-couple`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ byPersonId: viewer.id }),
+      });
+      onChange();
+    } finally {
+      setResolving(null);
+    }
+  }
+
   async function resolve(id: number) {
     setResolving(id);
     try {
@@ -58,13 +72,24 @@ export function Escalations({
                 <p className="mt-1 text-xs text-[#8A8578]">Routed to {name(t.escalated_to)}</p>
               )}
             </div>
-            <button
-              className={`${btnPrimary} shrink-0`}
-              disabled={resolving === t.id}
-              onClick={() => resolve(t.id)}
-            >
-              {resolving === t.id ? "…" : "Resolve"}
-            </button>
+            <div className="flex shrink-0 flex-col gap-2">
+              <button
+                className={btnPrimary}
+                disabled={resolving === t.id}
+                onClick={() => resolve(t.id)}
+              >
+                {resolving === t.id ? "…" : "Resolve"}
+              </button>
+              {viewer.role === "delegate" && !t.is_secret && t.escalated_to === viewer.id && (
+                <button
+                  className="rounded-xl border border-[#C0503D] px-3 py-2 text-sm font-semibold text-[#8A2B1C]"
+                  disabled={resolving === t.id}
+                  onClick={() => sendToCouple(t.id)}
+                >
+                  Send to Maya
+                </button>
+              )}
+            </div>
           </li>
         ))}
       </ul>

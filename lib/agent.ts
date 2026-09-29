@@ -32,6 +32,7 @@ interface TaskRow {
   area_id: string;
   area_name: string;
   is_surprise: boolean;
+  is_secret: boolean;
   owner_id: string;
   owner_name: string;
   owner_venmo: string | null;
@@ -41,7 +42,7 @@ async function loadTasks(personId: string, includeTaskId?: number): Promise<Task
   return (await sql`
     select t.id, t.title, t.details, to_char(t.due_date, 'YYYY-MM-DD') as due,
            t.amount::text as amount, t.status, t.status_note, t.nudge_count, t.escalated_to,
-           a.id as area_id, a.name as area_name, a.is_surprise,
+           a.id as area_id, a.name as area_name, a.is_surprise, t.is_secret,
            o.id as owner_id, o.name as owner_name, o.venmo as owner_venmo
     from tasks t
     join areas a on a.id = t.area_id
@@ -58,6 +59,7 @@ function describeTask(t: TaskRow): string {
     `area: ${t.area_name} (owner ${t.owner_name})`,
     `status: ${t.status}${t.status_note ? ` (${t.status_note})` : ""}`,
   ];
+  if (t.is_secret) parts.push("SECRET from the couple (never mention it to Maya or Jordan)");
   if (t.details) parts.push(`details: ${t.details}`);
   if (t.due) parts.push(`due: ${t.due}`);
   if (t.amount) {
@@ -110,7 +112,7 @@ export async function runAgent({ event, personId, taskId }: RunAgentInput): Prom
   if (!wedding || !person) throw new Error(`Unknown person ${personId}`);
 
   let tasks = await loadTasks(personId, taskId);
-  if (person.role === "couple") tasks = tasks.filter((t) => !t.is_surprise);
+  if (person.role === "couple") tasks = tasks.filter((t) => !t.is_surprise && !t.is_secret);
   const taskById = (id: number) => tasks.find((t) => t.id === id);
 
   const recent = (
@@ -241,10 +243,7 @@ ${eventLine}`;
         await log(task_id, `Marked ${person.name}'s "${t.title}" ${label}${note ? ` — ${note}` : ""}`);
         if (status === "done") {
           const recipients = new Set<string>([t.owner_id]);
-          if (!t.is_surprise) {
-            const couple = (await sql`select id from people where role = 'couple'`) as { id: string }[];
-            couple.forEach((c) => recipients.add(c.id));
-          }
+          // The couple only hear about escalations sent to them, not routine progress.
           recipients.delete(personId);
           for (const rid of recipients) {
             await sql`

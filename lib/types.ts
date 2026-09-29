@@ -55,6 +55,7 @@ export interface Task {
   /** Info the assignee submitted for info-collecting tasks (e.g. flight details). Visible to the
    * assignee and the area owner (API strips it for others). */
   response: string | null;
+  is_secret: boolean; // surprise for the bride: hidden from the couple
   awaiting_since: string | null; // ISO timestamp
   nudge_count: number;
   escalated_to: string | null;

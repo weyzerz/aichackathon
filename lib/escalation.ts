@@ -16,7 +16,7 @@ export interface EscalationRoute {
  * Surprise-area tasks are never routed to the couple.
  */
 export async function escalationTarget(
-  task: Pick<Task, "area_id" | "assignee_id">,
+  task: Pick<Task, "area_id" | "assignee_id"> & { is_secret?: boolean },
 ): Promise<EscalationRoute> {
   const [area] = (await sql`select * from areas where id = ${task.area_id}`) as {
     owner_id: string;
@@ -29,7 +29,7 @@ export async function escalationTarget(
     const owner = byId(area.owner_id);
     return { target: owner, notify: owner ? [owner] : [] };
   }
-  if (area?.is_surprise) {
+  if (area?.is_surprise || task.is_secret) {
     const other = people.find((p) => p.role === "delegate" && p.id !== task.assignee_id) ?? null;
     return { target: other, notify: other ? [other] : [] };
   }

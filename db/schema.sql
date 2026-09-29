@@ -39,6 +39,7 @@ create table tasks (
     check (status in ('todo','in_progress','done','blocked')),
   status_note text,
   response text,
+  is_secret boolean not null default false,   -- hidden from the couple (e.g. surprises for the bride)
   awaiting_since timestamptz,
   nudge_count int not null default 0,
   escalated_to text references people(id),
