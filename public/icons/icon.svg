@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#8A9A7B"/>
+  <circle cx="198" cy="246" r="92" fill="none" stroke="#FAF7F0" stroke-width="26"/>
+  <circle cx="314" cy="246" r="92" fill="none" stroke="#FAF7F0" stroke-width="26" opacity="0.92"/>
+  <text x="256" y="416" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+    font-size="60" font-style="italic" fill="#FAF7F0">Party Line</text>
+</svg>
