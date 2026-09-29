@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Area, Person, Task } from "@/lib/types";
 import { AssignForm } from "./AssignForm";
 import { TaskRow } from "./TaskRow";
-import { Card, Empty, Heading, btnPrimary, chipKind } from "./ui";
+import { Card, Empty, Heading, btnPrimary, chipKind, dueBadge } from "./ui";
 
 export function Escalations({
   escalations,
@@ -110,6 +110,8 @@ export function Board({
 
   const total = tasks.length;
   const done = tasks.filter((t) => t.status === "done").length;
+  const overdue = tasks.filter((t) => dueBadge(t)?.tone === "overdue").length;
+  const dueSoon = tasks.filter((t) => dueBadge(t)?.tone === "soon").length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -120,6 +122,8 @@ export function Board({
           <Heading className="text-2xl">{title}</Heading>
           <p className="text-sm text-[#8A8578]">
             {done} of {total} done
+            {overdue > 0 && <span className="font-semibold text-[#9A2E1F]"> · {overdue} overdue</span>}
+            {dueSoon > 0 && <span className="font-semibold text-[#8A6212]"> · {dueSoon} due soon</span>}
           </p>
         </div>
         {!assigning && assignAreas.length > 0 && (

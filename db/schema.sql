@@ -38,6 +38,8 @@ create table tasks (
   nudge_count int not null default 0,
   escalated_to text references people(id),
   escalation_reason text,
+  deadline_reminded_at timestamptz,
+  overdue_escalated boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

@@ -92,6 +92,8 @@ plan, and anything you can't answer. When you escalate, tell the person kindly t
 you've passed it to the person the escalate tool reports.
 
 For 'nudge' events: send one friendly reminder about that task and ask for a quick status.
+For 'deadline' events: the task is due within 2 days. Send one friendly heads-up naming the due
+date (e.g. "due Thursday") and ask whether it's on track.
 For money tasks, include the pay link when asking them to pay.
 Use tools for every action. Always end by sending the person exactly one message (send_message).
 When you ask about a specific task, set expects_reply true with its task_id.`;
@@ -125,6 +127,8 @@ export async function runAgent({ event, personId, taskId }: RunAgentInput): Prom
   if (event === "assigned") eventLine = `EVENT: assigned — task #${taskId} was just assigned to ${person.name}. Introduce it.`;
   else if (event === "nudge")
     eventLine = `EVENT: nudge — ${person.name} hasn't replied about task #${taskId}. This is reminder ${trigger?.nudge_count ?? 1} of 2.`;
+  else if (event === "deadline")
+    eventLine = `EVENT: deadline — task #${taskId} is due ${trigger?.due ?? "soon"} and isn't done yet. Remind ${person.name}.`;
   else eventLine = `EVENT: reply — ${person.name} just sent a message (last in the thread). Respond to it.`;
 
   const prompt = `Today is ${today}. Wedding date: ${wedding.date}.
@@ -172,6 +176,8 @@ ${eventLine}`;
         let body: string;
         if (event === "nudge" && t && t.id === taskId)
           body = `Nudged ${person.name}${about} (reminder ${t.nudge_count} of 2)`;
+        else if (event === "deadline" && t && t.id === taskId)
+          body = `Reminded ${person.name} that "${t.title}" is due ${t.due ?? "soon"}`;
         else if (event === "reply") body = `Replied to ${person.name}${about}`;
         else body = `Messaged ${person.name}${about}`;
         await log(tid, body);

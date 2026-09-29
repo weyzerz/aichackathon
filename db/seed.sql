@@ -30,8 +30,13 @@ insert into areas (id, name, owner_id, is_surprise) values
   ('bachelorette', 'Bachelorette',     'priya', true),
   ('dayof',        'Day-of',           'maya',  false);
 
-insert into tasks (area_id, assignee_id, created_by, title, amount, status, status_note) values
-  ('attire',       'jess',  'priya', 'Send shoe size',           null, 'done',        null),
-  ('dayof',        'leah',  'maya',  'Book room in hotel block', null, 'in_progress', 'booking this weekend'),
-  ('bachelorette', 'sarah', 'priya', 'Pay bachelorette share',   85,   'todo',        null),
-  ('bachelorette', 'priya', 'priya', 'Book bachelorette Airbnb', null, 'done',        null);
+-- Deadlines are relative to today so the demo always looks current:
+-- one overdue (escalates to Priya on the first tick), one due in 2 days (gets a reminder).
+insert into tasks (area_id, assignee_id, created_by, title, amount, status, status_note, due_date) values
+  ('attire',       'jess',  'priya', 'Send shoe size',                  null, 'done',        null,                   current_date - 5),
+  ('dayof',        'leah',  'maya',  'Book room in hotel block',        null, 'in_progress', 'booking this weekend', current_date + 16),
+  ('bachelorette', 'sarah', 'priya', 'Pay bachelorette share',          85,   'todo',        null,                   current_date + 2),
+  ('bachelorette', 'priya', 'priya', 'Book bachelorette Airbnb',        null, 'done',        null,                   current_date - 10),
+  ('attire',       'jess',  'priya', 'Send measurements to seamstress', null, 'todo',        null,                   current_date - 3),
+  ('dayof',        'sarah', 'maya',  'Confirm hair & makeup slot',      null, 'todo',        null,                   current_date + 21),
+  ('dayof',        'jess',  'maya',  'RSVP for rehearsal dinner',       null, 'done',        'coming +1',            current_date - 1);

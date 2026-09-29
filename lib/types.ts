@@ -3,7 +3,7 @@
 export type Role = "couple" | "delegate" | "member";
 export type TaskStatus = "todo" | "in_progress" | "done" | "blocked";
 export type NotificationKind = "message" | "escalation" | "update";
-export type AgentEvent = "assigned" | "reply" | "nudge";
+export type AgentEvent = "assigned" | "reply" | "nudge" | "deadline";
 
 export interface WeddingInfo {
   venue: string;
@@ -51,6 +51,8 @@ export interface Task {
   nudge_count: number;
   escalated_to: string | null;
   escalation_reason: string | null;
+  deadline_reminded_at: string | null; // set when the pre-deadline reminder went out
+  overdue_escalated: boolean;
   created_at: string;
   updated_at: string;
   // Present in /api/state responses only:

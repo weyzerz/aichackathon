@@ -84,6 +84,20 @@ export function formatDate(ymd: string | null | undefined): string {
   });
 }
 
+/** Deadline badge for open tasks: overdue (red) or due within 3 days (amber). */
+export function dueBadge(task: Task): { label: string; tone: "overdue" | "soon" } | null {
+  if (!task.due_date || task.status === "done") return null;
+  const [y, m, d] = task.due_date.slice(0, 10).split("-").map(Number);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.round((new Date(y, m - 1, d).getTime() - today.getTime()) / 86_400_000);
+  if (days < 0) return { label: days === -1 ? "Overdue 1 day" : `Overdue ${-days} days`, tone: "overdue" };
+  if (days === 0) return { label: "Due today", tone: "soon" };
+  if (days === 1) return { label: "Due tomorrow", tone: "soon" };
+  if (days <= 3) return { label: `Due in ${days} days`, tone: "soon" };
+  return null;
+}
+
 export function formatMoney(amount: string | null): string {
   if (!amount) return "";
   const n = Number(amount);

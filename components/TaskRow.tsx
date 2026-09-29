@@ -1,5 +1,5 @@
 import type { Area, Task } from "@/lib/types";
-import { StatusChip, chipKind, formatDate, formatMoney } from "./ui";
+import { StatusChip, chipKind, dueBadge, formatDate, formatMoney } from "./ui";
 
 const FLASH_MS = 8000;
 
@@ -16,6 +16,7 @@ export function TaskRow({
   showArea?: boolean;
 }) {
   const kind = chipKind(task);
+  const due = dueBadge(task);
   const recentlyChanged = now - Date.parse(task.updated_at) < FLASH_MS;
   const flash =
     recentlyChanged && kind === "done"
@@ -53,6 +54,16 @@ export function TaskRow({
               .filter(Boolean)
               .join(" · ")}
           </p>
+          {due && (
+            <span
+              className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                due.tone === "overdue" ? "bg-[#F6DDD8] text-[#9A2E1F]" : "bg-[#FBEFCF] text-[#8A6212]"
+              }`}
+            >
+              {due.tone === "overdue" ? "⏰ " : ""}
+              {due.label}
+            </span>
+          )}
           {task.status_note && (
             <p className="mt-1 text-[13px] italic text-[#5B574E]">“{task.status_note}”</p>
           )}
