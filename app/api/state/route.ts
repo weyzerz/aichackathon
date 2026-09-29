@@ -94,10 +94,10 @@ export async function GET(req: NextRequest) {
       order by created_at desc, id desc limit 50`) as Activity[];
   }
 
-  const escalationTargets =
-    viewer.role === "couple" ? new Set(["maya", "jordan", viewer.id]) : new Set([viewer.id]);
+  // The couple oversee everything visible to them (surprise areas are already filtered out),
+  // so they see escalations routed to delegates too; everyone else sees their own.
   const escalations = tasks.filter(
-    (t) => t.escalated_to != null && escalationTargets.has(t.escalated_to)
+    (t) => t.escalated_to != null && (viewer.role === "couple" || t.escalated_to === viewer.id)
   );
 
   const body: StateResponse = {
