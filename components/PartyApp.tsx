@@ -1,16 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Role, StateResponse } from "@/lib/types";
-import { Board } from "./Board";
+import { Board, Escalations } from "./Board";
 import { Chat } from "./Chat";
 import { EventsList } from "./Events";
 import { ActivityFeed, Alerts, MyTasks, WeddingView } from "./Views";
 import { btnPrimary } from "./ui";
 import { serif } from "./fonts";
 
-type TabId = "board" | "events" | "activity" | "tasks" | "chat" | "area" | "wedding" | "alerts";
+type TabId =
+  | "board"
+  | "events"
+  | "activity"
+  | "tasks"
+  | "chat"
+  | "area"
+  | "wedding"
+  | "alerts";
 
 const TABS: Record<Role, TabId[]> = {
   couple: ["board", "events", "activity", "wedding", "alerts"],
@@ -60,10 +74,18 @@ function usePartyState(personId: string) {
   const load = useCallback(async () => {
     const mySeq = ++seq.current;
     try {
-      const res = await fetch(`/api/state?viewer=${encodeURIComponent(personId)}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) throw new Error(res.status === 404 ? "Person not found" : `Server error (${res.status})`);
+      const res = await fetch(
+        `/api/state?viewer=${encodeURIComponent(personId)}`,
+        {
+          cache: "no-store",
+        },
+      );
+      if (!res.ok)
+        throw new Error(
+          res.status === 404
+            ? "Person not found"
+            : `Server error (${res.status})`,
+        );
       const json = (await res.json()) as StateResponse;
       if (mySeq !== seq.current) return; // a newer request superseded this one
       setData(json);
@@ -91,16 +113,21 @@ function usePartyState(personId: string) {
 export default function PartyApp({ personId }: { personId: string }) {
   const { data, error, now, refresh } = usePartyState(personId);
   const [tab, setTab] = useState<TabId | null>(null);
-  const [chatDraft, setChatDraft] = useState<{ text: string; key: number } | null>(null);
+  const [chatDraft, setChatDraft] = useState<{
+    text: string;
+    key: number;
+  } | null>(null);
   const role = data?.viewer.role;
   const tabs = role ? TABS[role] : [];
-  const active: TabId | null = tab && tabs.includes(tab) ? tab : (tabs[0] ?? null);
+  const active: TabId | null =
+    tab && tabs.includes(tab) ? tab : (tabs[0] ?? null);
   const unread = data?.notifications.filter((n) => !n.read).length ?? 0;
 
   // Couple view drives follow-ups.
   useEffect(() => {
     if (role !== "couple") return;
-    const tick = () => void fetch("/api/tick", { method: "POST" }).catch(() => {});
+    const tick = () =>
+      void fetch("/api/tick", { method: "POST" }).catch(() => {});
     tick();
     const id = setInterval(tick, TICK_MS);
     return () => clearInterval(id);
@@ -143,10 +170,21 @@ export default function PartyApp({ personId }: { personId: string }) {
       <p className="py-20 text-center text-[#8A8578]">Loading…</p>
     );
   } else {
-    const { viewer, people, areas, tasks, escalations, activity, notifications, thread, wedding } =
-      data;
+    const {
+      viewer,
+      people,
+      areas,
+      tasks,
+      escalations,
+      activity,
+      notifications,
+      thread,
+      wedding,
+    } = data;
     const ownedAreas = areas.filter((a) => a.owner_id === viewer.id);
-    const surprise = new Set(areas.filter((a) => a.is_surprise).map((a) => a.id));
+    const surprise = new Set(
+      areas.filter((a) => a.is_surprise).map((a) => a.id),
+    );
     switch (active) {
       case "board":
         body = (
@@ -166,7 +204,11 @@ export default function PartyApp({ personId }: { personId: string }) {
         const owned = new Set(ownedAreas.map((a) => a.id));
         body = (
           <Board
-            title={ownedAreas.length ? ownedAreas.map((a) => a.name).join(" & ") : "Your areas"}
+            title={
+              ownedAreas.length
+                ? ownedAreas.map((a) => a.name).join(" & ")
+                : "Your areas"
+            }
             viewer={viewer}
             people={people}
             areas={areas}
@@ -188,7 +230,9 @@ export default function PartyApp({ personId }: { personId: string }) {
             tasks={tasks}
             now={now}
             onChange={() => void refresh()}
-            wedding={TABS[viewer.role].includes("wedding") ? undefined : wedding}
+            wedding={
+              TABS[viewer.role].includes("wedding") ? undefined : wedding
+            }
           />
         );
         break;
@@ -197,19 +241,29 @@ export default function PartyApp({ personId }: { personId: string }) {
         break;
       case "tasks":
         body = (
-          <MyTasks
-            viewer={viewer}
-            tasks={tasks}
-            areas={areas}
-            now={now}
-            onReply={(t) => {
-              const text = /flight/i.test(t.title)
-                ? "My flight is "
-                : `About "${t.title}": `;
-              setChatDraft({ text, key: Date.now() });
-              go("chat");
-            }}
-          />
+          <div className="flex flex-col gap-4">
+            {viewer.role === "delegate" && (
+              <Escalations
+                escalations={escalations}
+                people={people}
+                viewer={viewer}
+                onChange={() => void refresh()}
+              />
+            )}
+            <MyTasks
+              viewer={viewer}
+              tasks={tasks}
+              areas={areas}
+              now={now}
+              onReply={(t) => {
+                const text = /flight/i.test(t.title)
+                  ? "My flight is "
+                  : `About "${t.title}": `;
+                setChatDraft({ text, key: Date.now() });
+                go("chat");
+              }}
+            />
+          </div>
         );
         break;
       case "chat":
@@ -241,27 +295,37 @@ export default function PartyApp({ personId }: { personId: string }) {
   return (
     <div
       className="flex h-dvh w-full justify-center bg-[#EFEAE0]"
-      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif' }}
+      style={{
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+      }}
     >
       <style>{GLOBAL_CSS}</style>
       <div className="flex h-dvh w-full max-w-[430px] flex-col bg-[#FAF7F0] text-[#2F3A28] shadow-[0_0_40px_rgba(60,50,30,0.08)]">
         <header className="shrink-0 border-b border-[#EDE7DA] bg-[#FAF7F0] px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className={`${serif.className} truncate text-xl font-medium text-[#2F3A28]`}>
+              <p
+                className={`${serif.className} truncate text-xl font-medium text-[#2F3A28]`}
+              >
                 {data?.wedding.name ?? "Party Line"}
               </p>
               <p className="truncate text-sm text-[#6F6A5E]">
                 {data ? (
                   <>
-                    <span className="font-semibold text-[#5F6F52]">{data.viewer.name}</span>
+                    <span className="font-semibold text-[#5F6F52]">
+                      {data.viewer.name}
+                    </span>
                     {data.viewer.title ? ` · ${data.viewer.title}` : ""}
                   </>
                 ) : (
                   personId
                 )}
                 {" · "}
-                <Link href="/" className="underline decoration-[#CBD3C2] underline-offset-2 hover:text-[#5F6F52]">
+                <Link
+                  href="/"
+                  className="underline decoration-[#CBD3C2] underline-offset-2 hover:text-[#5F6F52]"
+                >
                   Switch person
                 </Link>
               </p>
@@ -287,7 +351,11 @@ export default function PartyApp({ personId }: { personId: string }) {
         </header>
 
         <main ref={mainRef} className="flex-1 overflow-y-auto px-4 pt-4">
-          <div className={active === "chat" ? "flex min-h-full flex-col" : "pb-6"}>{body}</div>
+          <div
+            className={active === "chat" ? "flex min-h-full flex-col" : "pb-6"}
+          >
+            {body}
+          </div>
         </main>
 
         {tabs.length > 0 && (
@@ -296,17 +364,25 @@ export default function PartyApp({ personId }: { personId: string }) {
               {tabs.map((t) => {
                 const on = t === active;
                 const badge =
-                  t === "alerts" ? unread : t === "board" || t === "area" ? escalationCount : 0;
+                  t === "alerts"
+                    ? unread
+                    : t === "board" || t === "area"
+                      ? escalationCount
+                      : 0;
                 return (
                   <li key={t} className="flex-1">
                     <button
                       onClick={() => go(t)}
                       aria-current={on ? "page" : undefined}
                       className={`relative flex h-16 w-full flex-col items-center justify-center gap-1 text-xs font-semibold transition ${
-                        on ? "text-[#5F6F52]" : "text-[#A39E90] hover:text-[#6F6A5E]"
+                        on
+                          ? "text-[#5F6F52]"
+                          : "text-[#A39E90] hover:text-[#6F6A5E]"
                       }`}
                     >
-                      {on && <span className="absolute top-0 h-0.5 w-10 rounded-full bg-[#5F6F52]" />}
+                      {on && (
+                        <span className="absolute top-0 h-0.5 w-10 rounded-full bg-[#5F6F52]" />
+                      )}
                       <span className="relative">
                         <TabIcon tab={t} />
                         {badge > 0 && (
@@ -332,7 +408,17 @@ export default function PartyApp({ personId }: { personId: string }) {
 
 function BellIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
       <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
     </svg>
@@ -343,16 +429,34 @@ const ICON_PATHS: Record<TabId, string[]> = {
   events: ["M3 4h18v18H3z", "M16 2v4", "M8 2v4", "M3 10h18"],
   board: ["M3 3h7v9H3z", "M14 3h7v5h-7z", "M14 12h7v9h-7z", "M3 16h7v5H3z"],
   activity: ["M22 12h-4l-3 9L9 3l-3 9H2"],
-  tasks: ["M9 11l3 3L22 4", "M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"],
+  tasks: [
+    "M9 11l3 3L22 4",
+    "M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
+  ],
   chat: ["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"],
   area: ["M12 2 2 7l10 5 10-5-10-5z", "M2 17l10 5 10-5", "M2 12l10 5 10-5"],
-  wedding: ["M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"],
-  alerts: ["M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9", "M10.3 21a1.94 1.94 0 0 0 3.4 0"],
+  wedding: [
+    "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z",
+  ],
+  alerts: [
+    "M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9",
+    "M10.3 21a1.94 1.94 0 0 0 3.4 0",
+  ],
 };
 
 function TabIcon({ tab }: { tab: TabId }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       {ICON_PATHS[tab].map((d) => (
         <path key={d} d={d} />
       ))}
