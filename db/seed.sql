@@ -46,10 +46,7 @@ insert into tasks (area_id, assignee_id, created_by, title, details, amount, sta
   ('bachelorette', 'priya', 'priya', 'Send flight info', 'Airline, flight number, arrival time into PHX', null, 'done', null, 'Alaska 612 — lands PHX Fri 1:40pm', false, current_date + 5),
   ('bachelorette', 'jess',  'priya', 'Send flight info', 'Airline, flight number, arrival time into PHX', null, 'done', null, 'Delta 1188 — lands PHX Fri 3:05pm', false, current_date + 5),
   ('bachelorette', 'sarah', 'priya', 'Send flight info', 'Airline, flight number, arrival time into PHX', null, 'todo', null, null, false, current_date + 5),
-  ('bachelorette', 'leah',  'priya', 'Send flight info', 'Airline, flight number, arrival time into PHX', null, 'todo', null, null, false, current_date + 5),
-  ('bachelorette', 'sarah', 'priya', '🤫 Bring a cowboy hat & prep a hobby horse routine', 'Secret from Maya! Bring a cowboy hat and prepare a 30-second hobby horse routine to perform for the bride Saturday night.', null, 'todo', null, null, true, current_date + 30),
-  ('bachelorette', 'jess',  'priya', '🤫 Bring a cowboy hat & prep a hobby horse routine', 'Secret from Maya! Bring a cowboy hat and prepare a 30-second hobby horse routine to perform for the bride Saturday night.', null, 'todo', null, null, true, current_date + 30),
-  ('bachelorette', 'leah',  'priya', '🤫 Bring a cowboy hat & prep a hobby horse routine', 'Secret from Maya! Bring a cowboy hat and prepare a 30-second hobby horse routine to perform for the bride Saturday night.', null, 'todo', null, null, true, current_date + 30);
+  ('bachelorette', 'leah',  'priya', 'Send flight info', 'Airline, flight number, arrival time into PHX', null, 'todo', null, null, false, current_date + 5);
 
 -- The coordinator already asked Sarah and Leah for their flights.
 insert into messages (thread_person_id, sender, task_id, body)
