@@ -29,11 +29,16 @@ export interface Person {
   venmo: string | null;
 }
 
+/** An area of work, shown in the UI as an "event" (Bachelorette Weekend, Wedding Day…). */
 export interface Area {
   id: string;
   name: string;
   owner_id: string;
-  is_surprise: boolean;
+  is_surprise: boolean; // hidden from the couple
+  date_label: string | null; // e.g. "May 14–16, 2027"
+  location: string | null;
+  description: string | null;
+  details: Record<string, string> | null; // label → value, e.g. { "Airbnb": "…", "Theme": "…" }
 }
 
 export interface Task {
@@ -47,6 +52,9 @@ export interface Task {
   amount: string | null; // numeric comes back as string
   status: TaskStatus;
   status_note: string | null;
+  /** Info the assignee submitted for info-collecting tasks (e.g. flight details). Visible to the
+   * assignee and the area owner (API strips it for others). */
+  response: string | null;
   awaiting_since: string | null; // ISO timestamp
   nudge_count: number;
   escalated_to: string | null;

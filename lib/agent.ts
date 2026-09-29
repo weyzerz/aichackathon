@@ -91,6 +91,10 @@ Always escalate: money problems, conflicts, anything emotional, requests to chan
 plan, and anything you can't answer. When you escalate, tell the person kindly that
 you've passed it to the person the escalate tool reports.
 
+Some tasks collect information (e.g. "Send flight info"). When the person gives it, call
+update_task with status done AND the info in response, then thank them.
+Tasks starting with 🤫 are secret surprises for the bride: keep them light and fun.
+
 For 'nudge' events: send one friendly reminder about that task and ask for a quick status.
 For 'deadline' events: the task is due within 2 days. Send one friendly heads-up naming the due
 date (e.g. "due Thursday") and ask whether it's on track.
@@ -131,10 +135,37 @@ export async function runAgent({ event, personId, taskId }: RunAgentInput): Prom
     eventLine = `EVENT: deadline — task #${taskId} is due ${trigger?.due ?? "soon"} and isn't done yet. Remind ${person.name}.`;
   else eventLine = `EVENT: reply — ${person.name} just sent a message (last in the thread). Respond to it.`;
 
+  const areaIds = [...new Set(tasks.map((t) => t.area_id))];
+  const events = areaIds.length
+    ? ((await sql`
+        select name, date_label, location, description, details from areas
+        where id = any(${areaIds})`) as {
+        name: string;
+        date_label: string | null;
+        location: string | null;
+        description: string | null;
+        details: Record<string, string> | null;
+      }[])
+    : [];
+  const eventLines = events
+    .map((e) =>
+      [
+        `- ${e.name}${e.date_label ? `, ${e.date_label}` : ""}${e.location ? `, ${e.location}` : ""}`,
+        e.description && `  ${e.description}`,
+        ...Object.entries(e.details ?? {}).map(([k, v]) => `  ${k}: ${v}`),
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    )
+    .join("\n");
+
   const prompt = `Today is ${today}. Wedding date: ${wedding.date}.
 
 WEDDING DETAILS (the only facts you may use):
 ${JSON.stringify(wedding.info, null, 1)}
+
+EVENTS THIS PERSON IS PART OF (also facts you may use):
+${eventLines || "(none)"}
 
 PERSON: ${person.name}${person.title ? ` (${person.title})` : ""}
 
@@ -190,12 +221,19 @@ ${eventLine}`;
         task_id: z.number().int(),
         status: z.enum(["todo", "in_progress", "done", "blocked"]),
         note: z.string().describe("Short status note, e.g. 'ordered, arrives the 20th'"),
+        response: z
+          .string()
+          .optional()
+          .describe(
+            "For tasks that ask for information (e.g. 'Send flight info'): the info they gave, cleaned up on one line, e.g. 'United 455 — lands PHX Fri 2:10pm'",
+          ),
       }),
-      execute: async ({ task_id, status, note }) => {
+      execute: async ({ task_id, status, note, response }) => {
         const t = taskById(task_id);
         if (!t) return { ok: false, error: "Not one of this person's tasks" };
         await sql`
           update tasks set status = ${status}, status_note = ${note}, updated_at = now(),
+            response = coalesce(${response ?? null}, response),
             awaiting_since = case when ${status} = 'done' then null else awaiting_since end
           where id = ${task_id}`;
         t.status = status;
@@ -212,7 +250,19 @@ ${eventLine}`;
             await sql`
               insert into notifications (person_id, task_id, kind, body)
               values (${rid}, ${task_id}, 'update',
-                      ${`${person.name} finished "${t.title}"${note ? ` — ${note}` : ""}`})`;
+                      ${`${person.name} finished "${t.title}"${response ? ` — ${response}` : note ? ` — ${note}` : ""}`})`;
+          }
+          // Group tasks (same title in the same event, e.g. everyone's flight info):
+          // tell the organizer once the last one is in.
+          const [group] = (await sql`
+            select count(*)::int as total, count(*) filter (where status = 'done')::int as done
+            from tasks where area_id = ${t.area_id} and title = ${t.title}`) as { total: number; done: number }[];
+          if (group.total > 1 && group.done === group.total) {
+            const msg = `Everyone's in for "${t.title}" (${group.total} of ${group.total}) — ready for ${t.owner_name} to review.`;
+            await sql`
+              insert into notifications (person_id, task_id, kind, body)
+              values (${t.owner_id}, ${task_id}, 'update', ${msg})`;
+            await log(task_id, msg);
           }
         }
         return { ok: true };

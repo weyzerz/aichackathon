@@ -33,6 +33,12 @@ export function MyTasks({
         <Card key={t.id} className="flex flex-col gap-3">
           <TaskRow task={t} area={areaById.get(t.area_id)} now={now} />
           {t.details && <p className="px-1 text-sm text-[#5B574E]">{t.details}</p>}
+          {t.response && (
+            <p className="whitespace-pre-line rounded-xl bg-[#F3F8EF] px-3 py-2 text-sm text-[#2F3A28] ring-1 ring-[#DCEBD3]">
+              <span className="font-semibold text-[#2E5E22]">You sent: </span>
+              {t.response}
+            </p>
+          )}
           {t.pay_url && t.status !== "done" && (
             <a
               href={t.pay_url}

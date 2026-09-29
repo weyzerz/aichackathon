@@ -5,20 +5,23 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import type { Role, StateResponse } from "@/lib/types";
 import { Board } from "./Board";
 import { Chat } from "./Chat";
+import { EventsList } from "./Events";
 import { ActivityFeed, Alerts, MyTasks, WeddingView } from "./Views";
 import { btnPrimary } from "./ui";
 import { serif } from "./fonts";
 
-type TabId = "board" | "activity" | "tasks" | "chat" | "area" | "wedding" | "alerts";
+type TabId = "board" | "events" | "activity" | "tasks" | "chat" | "area" | "wedding" | "alerts";
 
 const TABS: Record<Role, TabId[]> = {
-  couple: ["board", "activity", "wedding", "alerts"],
-  delegate: ["tasks", "chat", "area", "wedding", "alerts"],
-  member: ["tasks", "chat", "wedding", "alerts"],
+  couple: ["board", "events", "activity", "wedding", "alerts"],
+  // 5 tabs max on a 390px screen: the delegate's wedding overview lives at the bottom of Events.
+  delegate: ["tasks", "events", "chat", "area", "alerts"],
+  member: ["tasks", "events", "chat", "wedding", "alerts"],
 };
 
 const LABEL: Record<TabId, string> = {
   board: "Board",
+  events: "Events",
   activity: "Activity",
   tasks: "Tasks",
   chat: "Chat",
@@ -175,6 +178,19 @@ export default function PartyApp({ personId }: { personId: string }) {
         );
         break;
       }
+      case "events":
+        body = (
+          <EventsList
+            viewer={viewer}
+            people={people}
+            areas={areas}
+            tasks={tasks}
+            now={now}
+            onChange={() => void refresh()}
+            wedding={TABS[viewer.role].includes("wedding") ? undefined : wedding}
+          />
+        );
+        break;
       case "activity":
         body = <ActivityFeed activity={activity} now={now} />;
         break;
@@ -301,6 +317,7 @@ function BellIcon() {
 }
 
 const ICON_PATHS: Record<TabId, string[]> = {
+  events: ["M3 4h18v18H3z", "M16 2v4", "M8 2v4", "M3 10h18"],
   board: ["M3 3h7v9H3z", "M14 3h7v5h-7z", "M14 12h7v9h-7z", "M3 16h7v5H3z"],
   activity: ["M22 12h-4l-3 9L9 3l-3 9H2"],
   tasks: ["M9 11l3 3L22 4", "M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"],

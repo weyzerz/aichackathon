@@ -19,7 +19,11 @@ create table areas (
   id text primary key,
   name text not null,
   owner_id text not null references people(id),
-  is_surprise boolean not null default false
+  is_surprise boolean not null default false,
+  date_label text,
+  location text,
+  description text,
+  details jsonb
 );
 
 create table tasks (
@@ -34,6 +38,7 @@ create table tasks (
   status text not null default 'todo'
     check (status in ('todo','in_progress','done','blocked')),
   status_note text,
+  response text,
   awaiting_since timestamptz,
   nudge_count int not null default 0,
   escalated_to text references people(id),

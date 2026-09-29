@@ -26,9 +26,11 @@ export async function GET(req: NextRequest) {
       sql`select id, name, to_char(date, 'YYYY-MM-DD') as date, info from wedding where id = 1`,
       sql`select id, name, role, title, venmo from people order by
             case role when 'couple' then 0 when 'delegate' then 1 else 2 end, name`,
-      sql`select id, name, owner_id, is_surprise from areas order by name`,
+      sql`select id, name, owner_id, is_surprise, date_label, location, description, details from areas
+            order by case id when 'bachelorette' then 0 when 'attire' then 1 else 2 end`,
       sql`select id, area_id, assignee_id, created_by, title, details,
-            to_char(due_date, 'YYYY-MM-DD') as due_date, amount, status, status_note,
+            to_char(due_date, 'YYYY-MM-DD') as due_date, amount, status, status_note, response,
+            deadline_reminded_at, overdue_escalated,
             awaiting_since, nudge_count, escalated_to, escalation_reason, created_at, updated_at
           from tasks order by created_at, id`,
       sql`select * from (
@@ -75,7 +77,10 @@ export async function GET(req: NextRequest) {
       const owner = personById.get(areaById.get(t.area_id)?.owner_id ?? "");
       if (owner?.venmo) pay_url = venmoPayUrl(owner.venmo, t.amount, t.title);
     }
-    return { ...t, pay_url };
+    // Submitted info (e.g. flights) is only for the assignee and the event's organizer.
+    const canSeeResponse =
+      t.assignee_id === viewer.id || areaById.get(t.area_id)?.owner_id === viewer.id;
+    return { ...t, pay_url, response: canSeeResponse ? t.response : null };
   });
 
   const taskIds = tasks.map((t) => t.id);
